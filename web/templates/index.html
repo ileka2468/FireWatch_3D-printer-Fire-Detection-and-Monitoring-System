@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 FireWatch Dashboard</title>
+    <style>
+        :root {
+            --bg: #0f0f1a;
+            --panel: #1e1e2e;
+            --text: #e0e0e0;
+            --muted: #6b7280;
+            --accent: #0cca4a;
+            --danger: #e94560;
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .alarm-banner {
+            display: none;
+            background-color: var(--danger);
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+        }
+        .panel {
+            background-color: var(--panel);
+            border-radius: 12px;
+            padding: 15px;
+            border: 2px solid #2a2a3e;
+        }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .panel-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .dot {
+            color: var(--muted);
+            font-size: 18px;
+        }
+        .dot.connected {
+            color: var(--accent);
+        }
+        .video-container {
+            width: 100%;
+            background-color: #0d0d15;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .video-feed {
+            width: 100%;
+            height: auto;
+            max-height: 75vh;
+            object-fit: contain;
+        }
+        .logs-container {
+            margin-top: 30px;
+            background-color: var(--panel);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .log-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid #2a2a3e;
+            font-family: monospace;
+            color: #b0b0c0;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🔥 FireWatch <span style="color:var(--muted); font-size:16px;">Dashboard</span></h1>
+        <div id="connection-status" style="color:var(--muted);">Connecting...</div>
+    </div>
+
+    <div id="alarm-banner" class="alarm-banner">
+        ⚠️ ACTIVE FIRE ALARM DETECTED ⚠️
+    </div>
+
+    <div class="grid" id="streams-grid">
+        <!-- Stream panels injected here -->
+    </div>
+
+    <div class="logs-container">
+        <h3>Recent Detection Logs</h3>
+        <div id="logs-list">
+            <!-- Logs injected here -->
+        </div>
+    </div>
+
+    <script>
+        const grid = document.getElementById('streams-grid');
+        const logsList = document.getElementById('logs-list');
+        const alarmBanner = document.getElementById('alarm-banner');
+        const connStatus = document.getElementById('connection-status');
+        
+        let existingStreams = new Set();
+
+        async function fetchState() {
+            try {
+                const response = await fetch('/api/state');
+                if (!response.ok) throw new Error('Network error');
+                
+                const data = await response.json();
+                connStatus.textContent = 'Live';
+                connStatus.style.color = 'var(--accent)';
+
+                // Update Alarm
+                if (data.alarm_active) {
+                    alarmBanner.style.display = 'block';
+                    document.body.style.backgroundColor = '#2c0808';
+                } else {
+                    alarmBanner.style.display = 'none';
+                    document.body.style.backgroundColor = 'var(--bg)';
+                }
+
+                // Update Streams
+                const currentNames = new Set(data.streams.map(s => s.name));
+                
+                // Add new streams
+                data.streams.forEach(stream => {
+                    if (!existingStreams.has(stream.name)) {
+                        createStreamPanel(stream.name);
+                        existingStreams.add(stream.name);
+                    }
+                    // Update connection dot
+                    const dot = document.getElementById(`dot-${stream.name}`);
+                    if (dot) {
+                        dot.className = stream.connected ? 'dot connected' : 'dot';
+                    }
+                });
+
+                // Remove old streams
+                existingStreams.forEach(name => {
+                    if (!currentNames.has(name)) {
+                        const panel = document.getElementById(`panel-${name}`);
+                        if (panel) panel.remove();
+                        existingStreams.delete(name);
+                    }
+                });
+
+                // Update Logs
+                logsList.innerHTML = '';
+                data.logs.forEach(log => {
+                    const div = document.createElement('div');
+                    div.className = 'log-entry';
+                    div.textContent = log;
+                    logsList.appendChild(div);
+                });
+
+            } catch (err) {
+                connStatus.textContent = 'Disconnected';
+                connStatus.style.color = 'var(--danger)';
+            }
+        }
+
+        function createStreamPanel(name) {
+            const panel = document.createElement('div');
+            panel.className = 'panel';
+            panel.id = `panel-${name}`;
+            
+            panel.innerHTML = `
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span id="dot-${name}" class="dot">●</span>
+                        ${name}
+                    </div>
+                </div>
+                <div class="video-container">
+                    <img src="/video_feed/${encodeURIComponent(name)}" class="video-feed" alt="Stream loading..." onerror="this.style.display='none'">
+                </div>
+            `;
+            grid.appendChild(panel);
+        }
+
+        // Fetch every 2 seconds
+        setInterval(fetchState, 2000);
+        fetchState();
+    </script>
+</body>
+</html>

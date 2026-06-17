@@ -1,0 +1,7 @@
+{
+    "streams": [],
+    "detection_interval": 5,
+    "alert_cooldown": 30,
+    "model": "gemma4:12b",
+    "save_alert_frames": true
+}
