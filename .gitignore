@@ -1,0 +1,21 @@
+# Alert snapshots (generated at runtime)
+dist/FireWatch/alerts/
+alerts/
+
+# Logs
+*.log
+dist/FireWatch/firedetection.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/FireWatch/_internal/
+
+# Build artifacts
+build/
+
+# Virtual environments
+venv/
+.venv/

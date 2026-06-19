@@ -1,5 +1,9 @@
 # FireWatch
 
+<p align="center">
+  <img src="firewatch.png" alt="FireWatch — 3D Print Fire Detection System" width="100%"/>
+</p>
+
 **FireWatch** is a professional-grade, 100% local, and fully private edge-AI fire detection and monitoring system designed specifically for 3D printers. 
 
 Unlike commercial solutions that require cloud subscriptions and send your private camera feeds over the internet, FireWatch runs locally on your own hardware. It leverages state-of-the-art **Large Vision Models** (via Ollama) coupled with high-frequency **Computer Vision** motion tracking to continuously analyze your printer streams. It ignores normal LED glare and intelligently detects active fires, smoke, thermal anomalies, failed prints (spaghetti monsters), and successful job completions.
@@ -35,26 +39,41 @@ Because FireWatch relies on running a Large Vision Model (LVM) locally, your inf
 If you are running on lower-end hardware, we highly recommend opening `firedetection.ini` and swapping your model to a smaller, more optimized vision model like `llava:7b` or `moondream` to ensure fast inference times and prevent out-of-memory errors.
 
 ### Prerequisites
-1. **Python 3.10+** installed on your machine.
-2. **Ollama** installed and running as a background service.
-3. Pull your preferred vision model via terminal: `ollama run gemma4:12b` (or swap to `llava`, `moondream`, etc., in the settings).
+1. **Ollama** installed and running as a background service.
+2. Pull your preferred vision model via terminal: `ollama run gemma4:12b` (or swap to `llava`, `moondream`, etc., in the settings).
 
-### Installation
-1. Clone the repository:
+### Installation (Windows — Recommended)
+
+The easiest way to get FireWatch running is with the pre-built executable. No Python required.
+
+1. **Download / clone this repository** and locate the `dist/FireWatch` folder.
+2. **Copy the entire `FireWatch` folder** to a safe, permanent location on your PC (e.g. `C:\Program Files\FireWatch` or `C:\Tools\FireWatch`).
+3. **Create a Desktop shortcut:**
+   - Navigate into your `FireWatch` folder and find `FireWatch.exe`.
+   - Right-click → **Create shortcut**.
+   - Move the shortcut to your Desktop.
+4. **Double-click the shortcut** to launch FireWatch. That's it!
+
+> **Tip:** If Windows SmartScreen blocks the app on first launch, click **"More info"** → **"Run anyway"**. This is normal for unsigned executables.
+
+### Alternative: Running from Python (Mac / Linux / Advanced Users)
+
+If you're on **macOS or Linux** (where the `.exe` won't work), or you prefer running from source:
+
+1. Make sure you have **Python 3.10+** installed.
+2. Clone the repository:
    ```bash
    git clone https://github.com/yourusername/FireWatch.git
    cd FireWatch
    ```
-2. Install the required Python dependencies:
+3. Install the required Python dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-3. Run the application:
+4. Run the application:
    ```bash
    python main.py
    ```
-
-*(Note: You can also compile FireWatch into a standalone `.exe` using the included `firewatch.spec` and PyInstaller!)*
 
 ---
 

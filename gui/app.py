@@ -1022,17 +1022,29 @@ class FireDetectionApp(ctk.CTk):
         """Update GUI elements with detection result (runs on main thread)."""
         # Update stream panel
         panel = self._stream_panels.get(result.stream_name)
+        should_log = True
+        
         if panel:
+            last_log_status = getattr(panel, '_last_log_status', None)
+            
+            # Suppress log spam for repetitive benign/terminal states
+            if result.status == last_log_status and result.status in ("PRINTING", "SAFE", "DONE", "FAILED"):
+                should_log = False
+                
             panel.update_detection(result.status, result.confidence, result.description)
+            
+            if should_log:
+                panel._last_log_status = result.status
 
-        # Add to alert log
-        self._alert_log.add_entry(
-            stream_name=result.stream_name,
-            status=result.status,
-            confidence=result.confidence,
-            description=result.description,
-            timestamp=result.timestamp
-        )
+        # Add to alert log if not suppressed
+        if should_log:
+            self._alert_log.add_entry(
+                stream_name=result.stream_name,
+                status=result.status,
+                confidence=result.confidence,
+                description=result.description,
+                timestamp=result.timestamp
+            )
 
     # ─── Cleanup ─────────────────────────────────────────────
 

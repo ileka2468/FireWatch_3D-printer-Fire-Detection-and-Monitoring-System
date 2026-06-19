@@ -46,6 +46,7 @@ class AlertManager:
         self._lock = threading.Lock()
         self._gui_callback = None  # Set by GUI to receive visual alerts
         self._sound_enabled = True
+        self._last_status: dict[str, str] = {}  # stream_name -> status
 
         # Alarm state — continuous until acknowledged
         self._alarm_active = False
@@ -104,20 +105,27 @@ class AlertManager:
             result: DetectionResult from the detection engine
             frame: Optional numpy array of the frame that triggered the alert
         """
-        # Always log to history
-        entry = AlertEntry(
-            timestamp=result.timestamp,
-            stream_name=result.stream_name,
-            status=result.status,
-            confidence=result.confidence,
-            description=result.description
-        )
-
         with self._lock:
+            last_status = self._last_status.get(result.stream_name, "PRINTING")
+            self._last_status[result.stream_name] = result.status
+
+            # Always log to history
+            entry = AlertEntry(
+                timestamp=result.timestamp,
+                stream_name=result.stream_name,
+                status=result.status,
+                confidence=result.confidence,
+                description=result.description
+            )
             self._alert_history.append(entry)
             # Keep history to last 500 entries
             if len(self._alert_history) > 500:
                 self._alert_history = self._alert_history[-500:]
+
+            is_duplicate_done_failed = result.status in ("DONE", "FAILED") and result.status == last_status
+
+        if is_duplicate_done_failed:
+            return
 
         # Check cooldown for non-PRINTING states
         if result.status != "PRINTING" and not self._alarm_active:
